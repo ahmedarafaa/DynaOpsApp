@@ -63,11 +63,11 @@ void main() {
   }
 
   void serverAnswers(Map<String, dynamic> json) => when(
-        () => api.check(platform: any(named: 'platform'), versionCode: any(named: 'versionCode')),
+        () => api.check(versionCode: any(named: 'versionCode')),
       ).thenAnswer((_) async => json);
 
   void serverFails() => when(
-        () => api.check(platform: any(named: 'platform'), versionCode: any(named: 'versionCode')),
+        () => api.check(versionCode: any(named: 'versionCode')),
       ).thenThrow(DioException(requestOptions: RequestOptions(), type: DioExceptionType.connectionError));
 
   test('a newer build is pending, sent the installed version, and parsed', () async {
@@ -76,7 +76,7 @@ void main() {
 
     final pending = await repository.check();
 
-    verify(() => api.check(platform: 'android', versionCode: 10)).called(1);
+    verify(() => api.check(versionCode: 10)).called(1);
     expect(pending, isNotNull);
     expect(pending!.versionCode, 12);
     expect(pending.mandatory, true);
@@ -154,6 +154,6 @@ void main() {
     final repository = await build(supported: false);
 
     expect(await repository.check(), isNull);
-    verifyNever(() => api.check(platform: any(named: 'platform'), versionCode: any(named: 'versionCode')));
+    verifyNever(() => api.check(versionCode: any(named: 'versionCode')));
   });
 }
