@@ -400,6 +400,67 @@ class AppLocalizationsAr extends AppLocalizations {
   String get reqLoadFailed => 'تعذّرت قراءة سجل الطلبات';
 
   @override
+  String get updateTitleOptional => 'تحديث متوفر';
+
+  @override
+  String get updateTitleMandatory => 'تحديث مطلوب';
+
+  @override
+  String updateBodyOptional(String version) {
+    return 'الإصدار $version من DynaOps جاهز للتنزيل.';
+  }
+
+  @override
+  String updateBodyMandatory(String version) {
+    return 'تحتاج إلى الإصدار $version لمواصلة استخدام DynaOps.';
+  }
+
+  @override
+  String get updateWhatsNew => 'ما الجديد';
+
+  @override
+  String get updateNow => 'تحديث';
+
+  @override
+  String get updateLater => 'لاحقًا';
+
+  @override
+  String get updatePause => 'إيقاف مؤقت';
+
+  @override
+  String get updateResume => 'متابعة';
+
+  @override
+  String get updateInstall => 'تثبيت';
+
+  @override
+  String updateProgress(String received, String total) {
+    return '$received من $total ميغابايت';
+  }
+
+  @override
+  String updateProgressUnknown(String received) {
+    return 'تم تنزيل $received ميغابايت';
+  }
+
+  @override
+  String get updatePaused => 'التنزيل متوقف مؤقتًا';
+
+  @override
+  String get updateFailedNetwork =>
+      'انقطع الاتصال. تحقق من الإنترنت ثم أعد المحاولة؛ سيُستكمل التنزيل من حيث توقف.';
+
+  @override
+  String get updateFailedOther => 'فشل التنزيل. حاول مرة أخرى.';
+
+  @override
+  String get updateReady =>
+      'تم تنزيل التحديث. اضغط «تثبيت» ثم أكّد في الشاشة التالية.';
+
+  @override
+  String get updateInstallFailed => 'تعذّر فتح المثبّت. حاول مرة أخرى.';
+
+  @override
   String get permissionsRequiredNote =>
       'يحتاج DynaOps إلى كل هذه الأذونات ليعمل. يمكنك استخدام التطبيق بمجرد السماح بها.';
 }

@@ -27,6 +27,10 @@ import '../../bridge/handlers/network_handler.dart';
 import '../../bridge/handlers/permissions_handler.dart';
 import '../../bridge/handlers/sync_handler.dart';
 import '../../bridge/handlers/tracking_handler.dart';
+import '../../features/app_update/cubit/app_update_cubit.dart';
+import '../../features/app_update/data/apk_download_repository.dart';
+import '../../features/app_update/data/app_update_api.dart';
+import '../../features/app_update/data/app_update_repository.dart';
 import '../../features/auth/data/session_repository.dart';
 import '../../features/connectivity/data/connectivity_repository.dart';
 import '../../features/device/data/device_repository.dart';
@@ -73,6 +77,7 @@ final getIt = GetIt.instance;
 Future<void> setupServiceLocator(AppConfig config) async {
   _registerCore(config);
   _registerAuth();
+  _registerAppUpdate();
   _registerConnectivity();
   _registerPermissions();
   _registerDevice();
@@ -112,6 +117,23 @@ void _registerAuth() {
     },
     dependsOn: [AnalyticsClient],
   );
+}
+
+void _registerAppUpdate() {
+  getIt
+    ..registerLazySingleton(() => AppUpdateApi(getIt()))
+    ..registerLazySingleton(() => ApkDownloadRepository(getIt(), getIt()))
+    // Loaded before the first frame: a stored mandatory update blocks at once.
+    ..registerSingletonAsync<AppUpdateRepository>(
+      () async {
+        final repository = AppUpdateRepository(getIt(), getIt(), getIt(), getIt());
+        await repository.load();
+        return repository;
+      },
+      // Dio needs the session and (for the request log) the database.
+      dependsOn: [PrefsStore, AppDatabase, SessionRepository],
+    )
+    ..registerFactory(() => AppUpdateCubit(getIt(), getIt()));
 }
 
 void _registerConnectivity() {

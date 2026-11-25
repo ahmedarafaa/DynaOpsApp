@@ -53,17 +53,23 @@ class AuthInterceptor extends Interceptor {
   AuthInterceptor(this._session);
   final SessionRepository _session;
 
+  /// Set `Options(extra: {AuthInterceptor.skipAuthKey: true})` on a request
+  /// that must not carry the token (the anonymous update check, the APK
+  /// download from another host); its 401 does not expire the session either.
+  static const skipAuthKey = 'auth.skip';
+
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     final token = _session.validToken;
-    if (token != null) options.headers['Authorization'] = 'bearer $token';
+    if (token != null && options.extra[skipAuthKey] != true) options.headers['Authorization'] = 'bearer $token';
     options.headers['Accept-Language'] = _session.current?.lang ?? 'en';
     handler.next(options);
   }
 
   @override
   Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.response?.statusCode == 401) await _session.markExpired();
+    final anonymous = err.requestOptions.extra[skipAuthKey] == true;
+    if (err.response?.statusCode == 401 && !anonymous) await _session.markExpired();
     handler.next(err);
   }
 }

@@ -17,6 +17,8 @@
     <!-- Lets the WebView file chooser offer the camera for photos (§5.4). -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <!-- Self-update: lets the app hand a downloaded APK to Android's installer. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 
     <application
         android:label="DynaOps"
@@ -64,6 +66,19 @@
         <meta-data
             android:name="com.posthog.posthog.AUTO_INIT"
             android:value="false" />
+        <!-- WebView file chooser camera: flutter_inappwebview writes the photo
+             through this provider. 1.2.0-beta.3 ships the class and
+             @xml/provider_paths but forgot to declare it, so camera photos
+             came back empty. Remove once the plugin declares it again. -->
+        <provider
+            android:name="com.pichillilorenzo.flutter_inappwebview_android.InAppWebViewFileProvider"
+            android:authorities="${applicationId}.flutter_inappwebview_android.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

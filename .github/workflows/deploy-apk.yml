@@ -1,0 +1,140 @@
+# Builds a signed release APK on every push to a tenant branch and uploads it
+# to that tenant's API (`<apiBaseUrl>MobileApp/Upload`), where the app's
+# updater finds it.
+#
+# - The API is read from lib/env/env.dart of the pushed branch, so each branch
+#   deploys to its own environment with no extra configuration.
+# - versionCode = the workflow run number (+ the optional VERSION_CODE_OFFSET
+#   repository variable): it rises on every run, which Android and the updater
+#   both require. versionName comes from `version:` in pubspec.yaml.
+# - Mandatory / ShowAlert / release notes come from release.json.
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64    the release keystore, base64-encoded
+#   ANDROID_KEYSTORE_PASSWORD  its password
+#   ANDROID_KEY_ALIAS          the key's alias
+#   ANDROID_KEY_PASSWORD       the key's password
+name: Deploy APK
+
+on:
+  push:
+    branches: [alraeduat, alraedprod]
+  workflow_dispatch:
+
+# One deploy per branch at a time, in push order; never cancel a running one.
+concurrency:
+  group: deploy-apk-${{ github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version, target API and release settings
+        id: meta
+        env:
+          VERSION_CODE_OFFSET: ${{ vars.VERSION_CODE_OFFSET }}
+        run: |
+          set -euo pipefail
+          version_name=$(sed -nE 's/^version:[[:space:]]*([0-9A-Za-z.\-]+).*/\1/p' pubspec.yaml)
+          version_code=$(( GITHUB_RUN_NUMBER + ${VERSION_CODE_OFFSET:-0} ))
+          api_base_url=$(sed -nE "s/.*apiBaseUrl[[:space:]]*=[[:space:]]*'([^']+)'.*/\1/p" lib/env/env.dart)
+          if [ -z "$version_name" ] || [ -z "$api_base_url" ]; then
+            echo "::error::Could not read the version (pubspec.yaml) or apiBaseUrl (lib/env/env.dart)."
+            exit 1
+          fi
+          case "$api_base_url" in
+            https://*/) ;;
+            *) echo "::error::apiBaseUrl must be https and end with '/': $api_base_url"; exit 1 ;;
+          esac
+          {
+            echo "version_name=$version_name"
+            echo "version_code=$version_code"
+            echo "upload_url=${api_base_url}MobileApp/Upload"
+            echo "mandatory=$(jq -r '.mandatory // false' release.json)"
+            echo "show_alert=$(jq -r 'if .showAlert == false then false else true end' release.json)"
+          } >> "$GITHUB_OUTPUT"
+          echo "Building $version_name ($version_code) for ${api_base_url}"
+
+      - name: Restore the release keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          # Never ship a debug-signed build: it could not update the installed app.
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Repository secret $name is not set."
+              exit 1
+            fi
+          done
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/release-keystore.jks
+          {
+            echo "storeFile=release-keystore.jks"
+            echo "storePassword=$ANDROID_KEYSTORE_PASSWORD"
+            echo "keyAlias=$ANDROID_KEY_ALIAS"
+            echo "keyPassword=$ANDROID_KEY_PASSWORD"
+          } > android/key.properties
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.3'
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Build the release APK
+        run: >
+          flutter build apk --release
+          --build-name="${{ steps.meta.outputs.version_name }}"
+          --build-number="${{ steps.meta.outputs.version_code }}"
+
+      - name: Name the APK
+        id: apk
+        run: |
+          set -euo pipefail
+          apk="dynaops-${{ steps.meta.outputs.version_name }}-${{ steps.meta.outputs.version_code }}.apk"
+          mv build/app/outputs/flutter-apk/app-release.apk "$apk"
+          echo "path=$apk" >> "$GITHUB_OUTPUT"
+
+      - name: Upload to the API
+        env:
+          UPLOAD_URL: ${{ steps.meta.outputs.upload_url }}
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            --retry 3 --retry-delay 10 --max-time 900 \
+            -F "File=@${{ steps.apk.outputs.path }};type=application/vnd.android.package-archive" \
+            --form-string "VersionCode=${{ steps.meta.outputs.version_code }}" \
+            --form-string "VersionName=${{ steps.meta.outputs.version_name }}" \
+            --form-string "Mandatory=${{ steps.meta.outputs.mandatory }}" \
+            --form-string "ShowAlert=${{ steps.meta.outputs.show_alert }}" \
+            --form-string "NotesEn=$(jq -r '.notesEn // ""' release.json)" \
+            --form-string "NotesAr=$(jq -r '.notesAr // ""' release.json)" \
+            "$UPLOAD_URL"
+
+      - name: Keep the APK with the run
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.apk.outputs.path }}
+          path: ${{ steps.apk.outputs.path }}
+          retention-days: 30
+
+      - name: Remove the keystore
+        if: always()
+        run: rm -f android/app/release-keystore.jks android/key.properties

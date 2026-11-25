@@ -246,6 +246,52 @@
   "@reqNoticeCleared": { "description": "Request inspector snackbar" },
   "reqLoadFailed": "Couldn't read the request log",
   "@reqLoadFailed": { "description": "Request inspector error title" },
+  "updateTitleOptional": "Update available",
+  "@updateTitleOptional": { "description": "Title of the update screen for an update that can be put off" },
+  "updateTitleMandatory": "Update required",
+  "@updateTitleMandatory": { "description": "Title of the update screen for an update that must be installed" },
+  "updateBodyOptional": "Version {version} of DynaOps is ready to download.",
+  "@updateBodyOptional": {
+    "description": "Body of the update screen for an optional update",
+    "placeholders": { "version": { "type": "String" } }
+  },
+  "updateBodyMandatory": "You need version {version} to keep using DynaOps.",
+  "@updateBodyMandatory": {
+    "description": "Body of the update screen for a mandatory update",
+    "placeholders": { "version": { "type": "String" } }
+  },
+  "updateWhatsNew": "What's new",
+  "@updateWhatsNew": { "description": "Heading above the release notes" },
+  "updateNow": "Update",
+  "@updateNow": { "description": "Button that starts downloading the update" },
+  "updateLater": "Later",
+  "@updateLater": { "description": "Button that puts off an optional update" },
+  "updatePause": "Pause",
+  "@updatePause": { "description": "Button that pauses the update download" },
+  "updateResume": "Resume",
+  "@updateResume": { "description": "Button that continues a paused update download" },
+  "updateInstall": "Install",
+  "@updateInstall": { "description": "Button that opens Android's installer on the downloaded update" },
+  "updateProgress": "{received} of {total} MB",
+  "@updateProgress": {
+    "description": "Download progress in megabytes",
+    "placeholders": { "received": { "type": "String" }, "total": { "type": "String" } }
+  },
+  "updateProgressUnknown": "{received} MB downloaded",
+  "@updateProgressUnknown": {
+    "description": "Download progress when the total size is not known",
+    "placeholders": { "received": { "type": "String" } }
+  },
+  "updatePaused": "Download paused",
+  "@updatePaused": { "description": "Shown under the progress bar while the update download is paused" },
+  "updateFailedNetwork": "The connection was lost. Check your internet, then retry; the download continues where it stopped.",
+  "@updateFailedNetwork": { "description": "Shown when the update download stopped because of the network" },
+  "updateFailedOther": "The download failed. Try again.",
+  "@updateFailedOther": { "description": "Shown when the update download failed for another reason" },
+  "updateReady": "The update is downloaded. Tap Install and confirm on the next screen.",
+  "@updateReady": { "description": "Shown when the update is downloaded and ready to install" },
+  "updateInstallFailed": "Couldn't open the installer. Try again.",
+  "@updateInstallFailed": { "description": "Shown when Android's installer could not be opened" },
   "permissionsRequiredNote": "DynaOps needs all of these to work. You can use the app as soon as they are allowed.",
   "@permissionsRequiredNote": { "description": "Under the step counter of the mandatory permission walkthrough" }
 }

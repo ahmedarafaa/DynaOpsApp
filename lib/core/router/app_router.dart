@@ -2,7 +2,9 @@
 /// `NativeNavigationCubit`), `/permissions` the mandatory permission
 /// walkthrough (`PermissionsCubit`), `/diagnostics` the support screen
 /// (`DiagnosticsCubit`), `/requests` the request inspector
-/// (`RequestInspectorCubit`). `PermissionGate` sends every other route to
+/// (`RequestInspectorCubit`). `/update` is the app-update screen
+/// (`AppUpdateCubit`). `UpdateGate` sends every route to `/update` while a
+/// mandatory update is pending; then `PermissionGate` sends every other route to
 /// `/permissions` until tracking has all it needs; unknown paths go to `/`.
 ///
 /// Why it exists: each feature Cubit is scoped to its route
@@ -11,9 +13,12 @@
 /// Status: used — created by `app.dart`.
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/app_update/cubit/app_update_cubit.dart';
+import '../../features/app_update/view/app_update_screen.dart';
 import '../../features/diagnostics/cubit/diagnostics_cubit.dart';
 import '../../features/diagnostics/view/diagnostics_screen.dart';
 import '../../features/permissions/cubit/permissions_cubit.dart';
@@ -25,11 +30,12 @@ import '../../features/shell/cubit/shell_cubit.dart';
 import '../../features/shell/view/shell_screen.dart';
 import '../di/service_locator.dart';
 import 'permission_gate.dart';
+import 'update_gate.dart';
 
-const _routes = {'/', '/permissions', '/diagnostics', '/requests'};
+const _routes = {'/', '/permissions', '/diagnostics', '/requests', UpdateGate.updatePath};
 
-GoRouter createAppRouter(PermissionGate gate) => GoRouter(
-      refreshListenable: gate,
+GoRouter createAppRouter(PermissionGate gate, UpdateGate updateGate) => GoRouter(
+      refreshListenable: Listenable.merge([gate, updateGate]),
       routes: [
         GoRoute(
           path: '/',
@@ -56,6 +62,13 @@ GoRouter createAppRouter(PermissionGate gate) => GoRouter(
           ),
         ),
         GoRoute(
+          path: UpdateGate.updatePath,
+          builder: (context, state) => BlocProvider(
+            create: (_) => getIt<AppUpdateCubit>()..start(),
+            child: const AppUpdateScreen(),
+          ),
+        ),
+        GoRoute(
           path: '/requests',
           builder: (context, state) => BlocProvider(
             create: (_) => getIt<RequestInspectorCubit>()..load(),
@@ -67,6 +80,10 @@ GoRouter createAppRouter(PermissionGate gate) => GoRouter(
         final requested = state.uri.path;
         // Unknown deep links fall back to the shell rather than an error page.
         final path = _routes.contains(requested) ? requested : '/';
+        // A mandatory update comes before everything, permissions included.
+        final update = updateGate.redirect(path);
+        if (update != null) return update;
+        if (path == UpdateGate.updatePath) return null;
         final gated = await gate.redirect(path);
         if (gated != null) return gated;
         return path == requested ? null : path;

@@ -782,6 +782,108 @@ abstract class AppLocalizations {
   /// **'Couldn\'t read the request log'**
   String get reqLoadFailed;
 
+  /// Title of the update screen for an update that can be put off
+  ///
+  /// In en, this message translates to:
+  /// **'Update available'**
+  String get updateTitleOptional;
+
+  /// Title of the update screen for an update that must be installed
+  ///
+  /// In en, this message translates to:
+  /// **'Update required'**
+  String get updateTitleMandatory;
+
+  /// Body of the update screen for an optional update
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} of DynaOps is ready to download.'**
+  String updateBodyOptional(String version);
+
+  /// Body of the update screen for a mandatory update
+  ///
+  /// In en, this message translates to:
+  /// **'You need version {version} to keep using DynaOps.'**
+  String updateBodyMandatory(String version);
+
+  /// Heading above the release notes
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s new'**
+  String get updateWhatsNew;
+
+  /// Button that starts downloading the update
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get updateNow;
+
+  /// Button that puts off an optional update
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get updateLater;
+
+  /// Button that pauses the update download
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get updatePause;
+
+  /// Button that continues a paused update download
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get updateResume;
+
+  /// Button that opens Android's installer on the downloaded update
+  ///
+  /// In en, this message translates to:
+  /// **'Install'**
+  String get updateInstall;
+
+  /// Download progress in megabytes
+  ///
+  /// In en, this message translates to:
+  /// **'{received} of {total} MB'**
+  String updateProgress(String received, String total);
+
+  /// Download progress when the total size is not known
+  ///
+  /// In en, this message translates to:
+  /// **'{received} MB downloaded'**
+  String updateProgressUnknown(String received);
+
+  /// Shown under the progress bar while the update download is paused
+  ///
+  /// In en, this message translates to:
+  /// **'Download paused'**
+  String get updatePaused;
+
+  /// Shown when the update download stopped because of the network
+  ///
+  /// In en, this message translates to:
+  /// **'The connection was lost. Check your internet, then retry; the download continues where it stopped.'**
+  String get updateFailedNetwork;
+
+  /// Shown when the update download failed for another reason
+  ///
+  /// In en, this message translates to:
+  /// **'The download failed. Try again.'**
+  String get updateFailedOther;
+
+  /// Shown when the update is downloaded and ready to install
+  ///
+  /// In en, this message translates to:
+  /// **'The update is downloaded. Tap Install and confirm on the next screen.'**
+  String get updateReady;
+
+  /// Shown when Android's installer could not be opened
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the installer. Try again.'**
+  String get updateInstallFailed;
+
   /// Under the step counter of the mandatory permission walkthrough
   ///
   /// In en, this message translates to:

@@ -395,6 +395,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reqLoadFailed => 'Couldn\'t read the request log';
 
   @override
+  String get updateTitleOptional => 'Update available';
+
+  @override
+  String get updateTitleMandatory => 'Update required';
+
+  @override
+  String updateBodyOptional(String version) {
+    return 'Version $version of DynaOps is ready to download.';
+  }
+
+  @override
+  String updateBodyMandatory(String version) {
+    return 'You need version $version to keep using DynaOps.';
+  }
+
+  @override
+  String get updateWhatsNew => 'What\'s new';
+
+  @override
+  String get updateNow => 'Update';
+
+  @override
+  String get updateLater => 'Later';
+
+  @override
+  String get updatePause => 'Pause';
+
+  @override
+  String get updateResume => 'Resume';
+
+  @override
+  String get updateInstall => 'Install';
+
+  @override
+  String updateProgress(String received, String total) {
+    return '$received of $total MB';
+  }
+
+  @override
+  String updateProgressUnknown(String received) {
+    return '$received MB downloaded';
+  }
+
+  @override
+  String get updatePaused => 'Download paused';
+
+  @override
+  String get updateFailedNetwork =>
+      'The connection was lost. Check your internet, then retry; the download continues where it stopped.';
+
+  @override
+  String get updateFailedOther => 'The download failed. Try again.';
+
+  @override
+  String get updateReady =>
+      'The update is downloaded. Tap Install and confirm on the next screen.';
+
+  @override
+  String get updateInstallFailed => 'Couldn\'t open the installer. Try again.';
+
+  @override
   String get permissionsRequiredNote =>
       'DynaOps needs all of these to work. You can use the app as soon as they are allowed.';
 }
