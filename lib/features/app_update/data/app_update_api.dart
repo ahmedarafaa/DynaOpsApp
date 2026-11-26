@@ -1,5 +1,5 @@
 /// `AppUpdateApi`: the two raw calls of the self-hosted updater —
-/// `GET AppUpdate/check?platform=android&versionCode=N` (works before login)
+/// `GET MobileApp/CheckUpdate?versionCode=N` (works before login)
 /// and a streamed, resumable `GET` of the APK (`Range: bytes=N-`). Neither
 /// carries the session token: the check is anonymous and the APK may live on
 /// another host.
@@ -18,16 +18,16 @@ class AppUpdateApi {
   final Dio _dio;
 
   /// Relative to `AppConfig.apiBaseUrl`. Change here if the backend names it differently.
-  static const checkPath = 'AppUpdate/check';
+  static const checkPath = 'MobileApp/CheckUpdate';
 
   static const _anonymous = {AuthInterceptor.skipAuthKey: true};
 
   /// The endpoint's answer (the envelope's `data` when there is one).
   /// Throws [DioException] / [FormatException]; the repository maps them.
-  Future<Map<String, dynamic>> check({required String platform, required int versionCode}) async {
+  Future<Map<String, dynamic>> check({required int versionCode}) async {
     final response = await _dio.get<Map<String, dynamic>>(
       checkPath,
-      queryParameters: {'platform': platform, 'versionCode': versionCode},
+      queryParameters: {'versionCode': versionCode},
       options: Options(extra: _anonymous),
     );
     final body = response.data;

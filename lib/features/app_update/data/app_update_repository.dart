@@ -91,7 +91,7 @@ class AppUpdateRepository {
 
   Future<AppUpdateModel?> _check() async {
     try {
-      final json = await _api.check(platform: 'android', versionCode: _installed);
+      final json = await _api.check(versionCode: _installed);
       _latest = json['updateAvailable'] == false ? null : AppUpdateModel.fromJson(json);
       await _prefs.setString(_storageKey, _latest == null ? '' : jsonEncode(_latest!.toJson()));
       await _downloads.cleanUp(keepVersionCode: pending?.versionCode);
