@@ -4,10 +4,11 @@
 #
 # - The API is read from lib/env/env.dart of the pushed branch, so each branch
 #   deploys to its own environment with no extra configuration.
-# - versionCode = the workflow run number (+ the optional VERSION_CODE_OFFSET
-#   repository variable): it rises on every run, which Android and the updater
-#   both require. versionName comes from `version:` in pubspec.yaml.
-# - Mandatory / ShowAlert / release notes come from release.json.
+# - versionCode comes from `versionCode` in release.json. Raise it before every
+#   push: Android and the updater both require it to be higher than the build
+#   already deployed, and the run stops early when it is not.
+#   versionName comes from `version:` in pubspec.yaml.
+# - Mandatory / ShowAlert / release notes also come from release.json.
 #
 # Repository secrets (Settings → Secrets and variables → Actions):
 #   ANDROID_KEYSTORE_BASE64    the release keystore, base64-encoded
@@ -38,12 +39,13 @@ jobs:
 
       - name: Read version, target API and release settings
         id: meta
-        env:
-          VERSION_CODE_OFFSET: ${{ vars.VERSION_CODE_OFFSET }}
         run: |
           set -euo pipefail
           version_name=$(sed -nE 's/^version:[[:space:]]*([0-9A-Za-z.\-]+).*/\1/p' pubspec.yaml)
-          version_code=$(( GITHUB_RUN_NUMBER + ${VERSION_CODE_OFFSET:-0} ))
+          version_code=$(jq -r '.versionCode // empty' release.json)
+          case "$version_code" in
+            ''|*[!0-9]*|0*) echo "::error::release.json needs a whole, positive \"versionCode\" (got '$version_code')."; exit 1 ;;
+          esac
           api_base_url=$(sed -nE "s/.*apiBaseUrl[[:space:]]*=[[:space:]]*'([^']+)'.*/\1/p" lib/env/env.dart)
           if [ -z "$version_name" ] || [ -z "$api_base_url" ]; then
             echo "::error::Could not read the version (pubspec.yaml) or apiBaseUrl (lib/env/env.dart)."
@@ -53,6 +55,17 @@ jobs:
             https://*/) ;;
             *) echo "::error::apiBaseUrl must be https and end with '/': $api_base_url"; exit 1 ;;
           esac
+          # Stop before the build when this versionCode would not be an update.
+          # An unreachable API only warns: the upload step will report it.
+          if latest=$(curl --fail --silent --show-error --max-time 30 "${api_base_url}MobileApp/CheckUpdate?versionCode=0"); then
+            deployed=$(printf '%s' "$latest" | jq -r 'if .updateAvailable == false then 0 else (.versionCode // 0) end')
+            if [ "$version_code" -le "$deployed" ]; then
+              echo "::error::versionCode $version_code in release.json is not higher than the deployed build ($deployed). Raise it and push again."
+              exit 1
+            fi
+          else
+            echo "::warning::Could not ask the API for the deployed versionCode; continuing."
+          fi
           {
             echo "version_name=$version_name"
             echo "version_code=$version_code"
